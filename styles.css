@@ -1,0 +1,205 @@
+/* General Styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Header Styling */
+.custom-header {
+    background-color: #5C2223;
+    padding: 0.5rem 1rem;
+    color: white;
+}
+.custom-header .logo-container {
+    text-align: center;
+}
+.custom-header img {
+    height: 4.7rem; /* Logo height set to 75px */
+}
+.custom-header .nav-link {
+    color: white !important;
+    margin-left: 1.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.3rem;
+    font-size: 1.3rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+}
+.custom-header .nav-link:hover {
+    background-color: #FFD700;
+}
+.custom-header .logo-text {
+    font-weight: bold;
+    color: white;
+    font-size: 1rem;
+    margin-top: 0.3rem;
+}
+
+/* Ensure Environmental Health text is always below the logo */
+.logo-text, .footer-logo-text {
+    font-weight: bold;
+    color: white;
+    font-size: 1rem;
+    margin-top: 0.3rem;
+    text-align: center;
+}
+
+/* Footer Styling with gold background */
+.custom-footer {
+    background-color: #e4c410cc; /* Set footer background to gold */
+    padding: 0.75rem 0;
+    color: white;
+}
+.footer-logo {
+    height: 4.7rem;
+}
+.custom-footer .nav-link {
+    color: white !important;
+    margin-left: 1.25rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 1.3rem;
+    font-weight: bold;
+    transition: color 0.3s ease;
+    text-decoration: none;
+}
+.custom-footer .nav-link:hover {
+    background-color: transparent;
+    color: rgba(43, 35, 0, 0.932);
+}
+/* Adds space at the bottom of form containers */
+.container {
+    margin-bottom: 2rem; /* Adjust spacing as needed */
+}
+
+
+/* Main Content Styling */
+.main-content {
+    padding: 1rem 0;
+    text-align: center;
+}
+.main-content h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+.content-wrapper {
+    display: flex;
+    align-items: center;
+    height: auto;
+}
+.text-column {
+    text-align: center;
+}
+.image-column {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.image-column img {
+    max-width: 100%;
+    height: auto;
+    max-height: 31.25rem; /* Maximum height for main image */
+}
+
+/* Container to organize the viewer, button, and counter */
+.content-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 50px;
+    width: 70%; /* Adjust width as needed */
+    max-width: 800px;
+    margin: auto;
+}
+
+/* PDF Viewer Styling */
+.pdf-viewer, .create-dls {
+    width: 150px;
+    height: 200px;
+    border: 2px solid black;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    position: relative;
+    background-color: #f0f0f0;
+}
+
+.pdf-viewer {
+    position: relative;
+}
+.pdf-viewer::before, .pdf-viewer::after {
+    content: "";
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 2px solid black;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+}
+.pdf-viewer::before {
+    content: "←";
+    left: -45px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.pdf-viewer::after {
+    content: "→";
+    right: -45px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.pdf-viewer .pdf-viewer-text {
+    font-size: 24px;
+    font-weight: bold;
+}
+.pdf-viewer .pdf-subtext {
+    font-size: 16px;
+    color: #555;
+    margin-top: 5px;
+}
+
+/* Create DLS Button Styling */
+.create-dls {
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.create-dls:hover {
+    background-color: #e6e6e6;
+}
+.create-dls .create-icon {
+    font-size: 36px;
+    font-weight: bold;
+}
+.create-dls .create-text {
+    font-size: 16px;
+    color: #555;
+    margin-top: 5px;
+}
+
+/* Completed Counter Styling */
+.completed-counter {
+    position: relative;
+    top: -30px;
+    right: -30px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+.completed-counter .icon {
+    font-size: 24px;
+}
+.completed-counter .count {
+    font-size: 18px;
+    color: #000;
+    font-weight: normal;
+    margin-top: 5px;
+}
