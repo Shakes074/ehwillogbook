@@ -8,74 +8,94 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Retrieve and sanitize form inputs
-$title = trim($_POST['title']);
-$initials = trim($_POST['initials']);
-$gender = trim($_POST['gender']);
-$race = trim($_POST['race']);
-$levelId = (int)$_POST['level'];
-$workingArea1 = (int)$_POST['workingarea1'];
-$workingArea2 = (int)$_POST['workingarea2'];
+try {
+    // Retrieve and sanitize form inputs
+    $title = trim($_POST['title']);
+    $initials = trim($_POST['initials']);
+    $gender = trim($_POST['gender']);
+    $race = trim($_POST['race']);
+    $levelId = (int)$_POST['level'];
+    $workingArea1 = trim($_POST['workingarea1']); // Placement Option A
+    $workingArea2 = trim($_POST['workingarea2']); // Placement Option B
+    $altPhoneNumber = trim($_POST['alt_phone_number']);
+    $idNumber = trim($_POST['id_number']);
+    $dateOfBirth = trim($_POST['date_of_birth']); // Assuming this is passed as 'YYYY-MM-DD'
 
-// Concatenate address fields
-$streetAddress = trim($_POST['street_address']);
-$town = trim($_POST['town']);
-$province = trim($_POST['province']);
-$postalCode = trim($_POST['postal_code']);
-$homeAddress = "$streetAddress, $town, $province, $postalCode";
+    // Concatenate address fields
+    $streetAddress = trim($_POST['street_address']);
+    $town = trim($_POST['town']);
+    $province = trim($_POST['province']);
+    $postalCode = trim($_POST['postal_code']);
+    $homeAddress = "$streetAddress, $town, $province, $postalCode";
 
-// Get user ID from session
-$userId = $_SESSION['user_id'];
-$applicationDate = date('Y-m-d');
+    // Get user ID from session
+    $userId = $_SESSION['user_id'];
+    $homeTown = $town; // Assuming town is the home_town
 
-// File upload paths (set appropriate paths for storing files)
-$cvDocument = $_FILES['cvdocument']['name'];
-$idDocument = $_FILES['iddocument']['name'];
-$signature = $_FILES['signature']['name'];
+    // Handle file uploads
+    $allowedPdfTypes = ['application/pdf'];
+    $allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
-// Move uploaded files to a designated folder
-$targetDir = "../uploads/";
-$cvDocumentPath = $targetDir . basename($cvDocument);
-$idDocumentPath = $targetDir . basename($idDocument);
-$signaturePath = $targetDir . basename($signature);
+    $cvDocument = $_FILES['cvdocument'];
+    $idDocument = $_FILES['iddocument'];
+    $signature = $_FILES['signature'];
 
-// Check file upload and move files
-if (!move_uploaded_file($_FILES['cvdocument']['tmp_name'], $cvDocumentPath) ||
-    !move_uploaded_file($_FILES['iddocument']['tmp_name'], $idDocumentPath) ||
-    !move_uploaded_file($_FILES['signature']['tmp_name'], $signaturePath)) {
-    echo "Error uploading files. Please try again.";
-    exit();
+    $targetDir = "../uploads/";
+
+    $cvDocumentPath = $targetDir . basename($cvDocument['name']);
+    $idDocumentPath = $targetDir . basename($idDocument['name']);
+    $signaturePath = $targetDir . basename($signature['name']);
+
+    // Validate and move uploaded files
+    if (
+        $cvDocument['error'] !== UPLOAD_ERR_OK ||
+        $idDocument['error'] !== UPLOAD_ERR_OK ||
+        $signature['error'] !== UPLOAD_ERR_OK ||
+        !in_array($cvDocument['type'], $allowedPdfTypes) ||
+        !in_array($idDocument['type'], $allowedPdfTypes) ||
+        !in_array($signature['type'], $allowedImageTypes) ||
+        !move_uploaded_file($cvDocument['tmp_name'], $cvDocumentPath) ||
+        !move_uploaded_file($idDocument['tmp_name'], $idDocumentPath) ||
+        !move_uploaded_file($signature['tmp_name'], $signaturePath)
+    ) {
+        throw new Exception('Error uploading files. Ensure correct file types (PDF for documents, JPG/PNG/WebP for signature) and try again.');
+    }
+
+    // Prepare SQL call to stored procedure
+    $sql = "CALL sp_student_application(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @result_message)";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param(
+        'issssssssssssisss',
+        $userId,          // p_user_id
+        $title,           // p_title
+        $race,            // p_race
+        $initials,        // p_initials
+        $dateOfBirth,     // p_date_of_birth
+        $altPhoneNumber,  // p_alt_phone_number
+        $idNumber,        // p_id_number
+        $gender,          // p_gender
+        $cvDocumentPath,  // p_cv_document
+        $idDocumentPath,  // p_id_document
+        $province,        // p_province_of_residence
+        $homeAddress,     // p_physical_address
+        $homeTown,        // p_home_town
+        $signaturePath,   // p_signature
+        $levelId,         // p_level_id
+        $workingArea1,    // p_working_area_a
+        $workingArea2     // p_working_area_b
+    );
+
+    if ($stmt->execute()) {
+        $result = $conn->query("SELECT @result_message AS message");
+        $message = $result->fetch_assoc()['message'];
+        echo "<script>alert('$message'); window.location.href = 'dashboard.php';</script>";
+    } else {
+        throw new Exception("Error executing the procedure. Please try again.");
+    }
+
+    $stmt->close();
+    $conn->close();
+} catch (Exception $e) {
+    echo "<script>alert('{$e->getMessage()}'); window.location.href = 'student_application.php';</script>";
 }
-
-// Prepare SQL call to stored procedure
-$resultMessage = '';
-$sql = "CALL sp_student_application(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, @resultMessage)";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param(
-    'sssssssiisss',
-    $cvDocumentPath,    // p_cvdocument
-    $idDocumentPath,    // p_iddocument
-    $workingArea1,      // p_workingarea1
-    $workingArea2,      // p_workingarea2
-    $homeAddress,       // p_address
-    $signaturePath,     // p_signature
-    0,                  // p_active (set to inactive by default)
-    $userId,            // p_userid
-    $levelId,           // p_levelid
-    $title,             // p_title
-    $initials,          // p_initials
-    $gender,            // p_gender
-    $race               // p_race
-);
-
-// Execute the procedure and get the result
-if ($stmt->execute()) {
-    $result = $conn->query("SELECT @resultMessage AS message");
-    $message = $result->fetch_assoc()['message'];
-    echo "<script>alert('$message'); window.location.href = 'dashboard.php';</script>";
-} else {
-    echo "Error submitting application: " . $conn->error;
-}
-$stmt->close();
-$conn->close();
 ?>

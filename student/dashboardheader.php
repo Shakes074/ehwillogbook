@@ -1,26 +1,33 @@
 <?php
-// Start session only if it hasn't been started already
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 include '../dbscripts/dbconnection.php';
-
 // Ensure user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: signin.php");
     exit();
 }
-
 // Get user ID from session
 $userId = $_SESSION['user_id'];
+
+// Fetch user details
+$userQuery = "SELECT name, surname FROM user WHERE id = ?";
+$userStmt = $conn->prepare($userQuery);
+$userStmt->bind_param("i", $userId);
+$userStmt->execute();
+$userData = $userStmt->get_result()->fetch_assoc();
+$userName = htmlspecialchars($userData['name']);
+$userSurname = htmlspecialchars($userData['surname']);
 
 // Set current year and month
 $currentYear = date("Y");
 $currentMonth = date("m");
 
 // Check if the student has an application for the current year
-$appQuery = "SELECT COUNT(*) AS application_count FROM student WHERE userid = ? AND YEAR(application_date) = ?";
+$appQuery = "
+    SELECT COUNT(*) AS application_count
+    FROM student_application sa
+    INNER JOIN student s ON sa.student_id = s.id
+    WHERE s.user_id = ? AND YEAR(sa.application_date) = ?
+";
 $stmt = $conn->prepare($appQuery);
 $stmt->bind_param("ii", $userId, $currentYear);
 $stmt->execute();
@@ -29,7 +36,6 @@ $appResult = $stmt->get_result()->fetch_assoc();
 // Determine if the application link should be shown: only in October and if no application exists for the current year
 $showApplicationLink = ($currentMonth >= 10) && ($appResult['application_count'] == 0);
 ?>
-
 
 <!DOCTYPE html>
 <html lang="en">
@@ -73,5 +79,9 @@ $showApplicationLink = ($currentMonth >= 10) && ($appResult['application_count']
                 </ul>
             </div>
         </nav>
+    </div>
+    <!-- Welcome Message -->
+    <div class="container text-center mt-3">
+        <h3>Welcome, <?php echo $userName . ' ' . $userSurname; ?>!</h3>
     </div>
 </header>

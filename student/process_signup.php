@@ -1,32 +1,37 @@
 <?php
 include '../dbscripts/dbconnection.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Retrieve and sanitize form inputs
-    $name = trim($_POST['name']);
-    $surname = trim($_POST['surname']);
-    $studentnumber = trim($_POST['studentnumber']);
-    $email = trim($_POST['email']);
-    $cellnumber = trim($_POST['cellnumber']);
-    $password = trim($_POST['confirm_password']);  // Use confirmed password directly
+// Check if form is submitted
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $name = $_POST['name'];
+    $surname = $_POST['surname'];
+    $cellnumber = $_POST['cellnumber'];
+    $email = $_POST['email'];
+    $studentnumber = $_POST['studentnumber'];
+    $password = $_POST['password'];
 
-    // Prepare SQL to call the stored procedure
-    $sql = "CALL sp_register_student(?, ?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
+    try {
+        // Call the stored procedure
+        $stmt = $conn->prepare("CALL sp_register_student(?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssss", $name, $surname, $studentnumber, $email, $password, $cellnumber);
 
-    // Bind parameters: name, surname, student number, email, plain password, cell number
-    $stmt->bind_param("ssssss", $name, $surname, $studentnumber, $email, $password, $cellnumber);
-
-    // Execute the statement and check if successful
-    if ($stmt->execute()) {
-        // Redirect to login page or confirmation page
-        header("Location: ../student/signin.php");
-        exit();
-    } else {
-        echo "<script>alert('Error: Could not register. Please try again.'); window.location.href='signup.php';</script>";
+        // Execute the statement
+        if ($stmt->execute()) {
+            echo "<script>alert('Account created successfully!'); window.location.href = 'signin.php';</script>";
+        } else {
+            throw new Exception("Database execution failed: " . $stmt->error);
+        }
+    } catch (mysqli_sql_exception $e) {
+        if ($e->getCode() == 1062) { // Duplicate entry
+            echo "<script>alert('An account with this student number already exists. Please log in.'); window.location.href = 'signin.php';</script>";
+        } else {
+            echo "<script>alert('Database error: " . $e->getMessage() . "'); window.location.href = 'signup.php';</script>";
+        }
+    } catch (Exception $e) {
+        echo "<script>alert('An unexpected error occurred: " . $e->getMessage() . "'); window.location.href = 'signup.php';</script>";
+    } finally {
+        $stmt->close();
+        $conn->close();
     }
-} else {
-    header("Location: ../student/signup.php");
-    exit();
 }
 ?>
